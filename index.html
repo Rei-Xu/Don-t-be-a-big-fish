@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小心別當大魚</title>
+<link rel="icon" href="data:,">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#0b3d5c;font-family:"Microsoft JhengHei","微軟正黑體","PingFang TC","Noto Sans TC",sans-serif;user-select:none}
+button{font-family:inherit;cursor:pointer}
+#stage{position:absolute;left:0;top:0;width:1366px;height:768px;transform-origin:0 0;overflow:hidden;background:linear-gradient(#c9efff,#86d0f2 70%,#5bb6e0)}
+.screen{position:absolute;inset:0;display:none}
+.screen.on{display:block}
+#safeTag{position:fixed;right:8px;bottom:6px;z-index:2147483647;background:rgba(0,0,0,.72);color:#fff;font-size:14px;padding:4px 12px;border-radius:14px;pointer-events:none;letter-spacing:1px}
+
+/* 偵探證 */
+#card{position:absolute;left:14px;top:14px;width:252px;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,#fffbe6,#ffe9a8);border:3px solid #c9932b;box-shadow:0 4px 0 #a8751c;z-index:110;display:none;font-size:15px;color:#4a3410}
+#card .ct{font-size:13px;color:#8a6420;font-weight:bold;letter-spacing:2px}
+#card .cn{font-size:22px;font-weight:bold;margin:4px 0 6px}
+#card .cr{line-height:1.6}
+#card .cr small{color:#a07a30}
+#card .money{margin-top:6px;font-size:24px;font-weight:bold;color:#1d7a2c;transition:transform .15s}
+#card .money.hit{color:#d22;transform:scale(1.25)}
+#card .bdg{font-size:16px;margin-top:2px}
+.fly{position:absolute;font-size:26px;font-weight:bold;color:#e22;z-index:70;pointer-events:none;animation:fly 1s forwards}
+@keyframes fly{to{transform:translateY(-50px);opacity:0}}
+
+/* 共用按鈕 */
+.bigbtn{font-size:30px;font-weight:bold;padding:16px 36px;border-radius:18px;border:none;color:#fff;background:#2b8a3e;box-shadow:0 6px 0 #1b5e28}
+.bigbtn:active{transform:translateY(4px);box-shadow:0 2px 0 #1b5e28}
+.bigbtn.blue{background:#1971c2;box-shadow:0 6px 0 #0f4a85}
+.bigbtn.orange{background:#e8590c;box-shadow:0 6px 0 #a33d06}
+.bigbtn.gray{background:#868e96;box-shadow:0 6px 0 #5c636a}
+.smbtn{font-size:18px;padding:8px 18px;border-radius:12px;border:2px solid #0f4a85;background:#fff;color:#0f4a85;font-weight:bold}
+
+/* 開始畫面 */
+#scr-start{text-align:center}
+.title{font-size:84px;font-weight:900;color:#0b4f7a;margin-top:90px;text-shadow:0 5px 0 #fff}
+.sub{font-size:28px;color:#11425f;margin:14px 0 50px}
+.roundbtns{display:flex;justify-content:center;gap:60px}
+.roundbtns .bigbtn{width:330px;font-size:40px;padding:26px 0}
+.roundbtns .st{display:block;font-size:20px;font-weight:normal;margin-top:6px}
+.fishdeco{position:absolute;font-size:60px;animation:swim 9s linear infinite}
+@keyframes swim{from{transform:translateX(-200px)}to{transform:translateX(1600px)}}
+
+/* 領偵探證 */
+#scr-get{text-align:center}
+#scr-get h2{font-size:44px;color:#0b4f7a;margin:60px 0 20px}
+.bigcard{width:560px;margin:0 auto 30px;padding:26px 34px;border-radius:24px;background:linear-gradient(135deg,#fffbe6,#ffe9a8);border:5px solid #c9932b;box-shadow:0 8px 0 #a8751c;text-align:left;font-size:26px;color:#4a3410;animation:flip .8s}
+@keyframes flip{from{transform:rotateY(90deg) scale(.6)}to{transform:none}}
+.bigcard .cn{font-size:40px;font-weight:bold;margin:6px 0 12px}
+.bigcard .row2{line-height:1.8}
+.bigcard small{font-size:18px;color:#a07a30}
+.getnote{font-size:22px;color:#11425f;margin-bottom:26px}
+
+/* 大廳 */
+#scr-lobby .lhead{position:absolute;left:290px;top:22px;font-size:40px;font-weight:bold;color:#0b4f7a}
+#scr-lobby .lsub{position:absolute;left:292px;top:80px;font-size:22px;color:#11425f}
+.tiles{position:absolute;left:290px;top:130px;width:1050px;display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.tile{height:230px;border-radius:22px;background:#fff;border:4px solid #1971c2;box-shadow:0 6px 0 #0f4a85;display:flex;align-items:center;gap:20px;padding:0 26px;cursor:pointer;position:relative}
+.tile:hover{background:#f1f8ff}
+.tile .ti{font-size:100px}
+.tile .tn{font-size:36px;font-weight:bold;color:#0b4f7a}
+.tile .tr{font-size:20px;color:#444;margin-top:6px}
+.tile .ts{font-size:22px;margin-top:10px;font-weight:bold;color:#2b8a3e}
+.tile.done{border-color:#2b8a3e;box-shadow:0 6px 0 #1b5e28}
+.tile .tick{position:absolute;right:18px;top:12px;font-size:50px}
+.lfoot{position:absolute;left:290px;top:648px;width:1050px;display:flex;gap:20px;align-items:center}
+.lfoot .grow{flex:1}
+.lside{position:absolute;left:14px;top:300px;width:252px;font-size:18px;color:#11425f;line-height:1.6;background:rgba(255,255,255,.7);border-radius:14px;padding:12px 14px}
+
+/* 遊戲畫面 */
+#gbar{position:absolute;left:280px;top:14px;width:1072px;height:58px;display:flex;align-items:center;gap:16px}
+#gtitle{font-size:32px;font-weight:bold;color:#0b4f7a}
+#gprog{flex:1;text-align:right;font-size:26px;font-weight:bold;color:#11425f}
+#cv{position:absolute;left:280px;top:80px;width:1072px;height:640px;border-radius:16px;border:4px solid #0f4a85;background:#fff}
+#ghelp{position:absolute;left:14px;top:300px;width:252px;background:rgba(255,255,255,.85);border-radius:14px;padding:14px;font-size:20px;color:#11425f;line-height:1.6}
+#ghelp b{display:inline-block;background:#fff;border:2px solid #555;border-bottom-width:5px;border-radius:8px;padding:0 8px;margin:2px 0;font-size:18px}
+#gmsg{position:absolute;left:280px;top:80px;width:1072px;height:640px;border-radius:16px;background:rgba(0,30,60,.55);display:none;align-items:center;justify-content:center;z-index:40}
+#gmsg.on{display:flex}
+#gmsg .box{background:#fff;border-radius:24px;padding:34px 50px;text-align:center;min-width:480px}
+#gmsg .h{font-size:48px;font-weight:bold;color:#0b4f7a}
+#gmsg .m{font-size:26px;color:#333;margin:14px 0 26px}
+#gmsg .btns{display:flex;gap:20px;justify-content:center}
+
+/* 陷阱彈窗 */
+#trapLayer{position:absolute;inset:0;z-index:100;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center}
+#trapLayer.on{display:flex}
+.tbox{width:680px;position:relative}
+.tool{display:flex;align-items:center;gap:14px;background:#2d3a4a;border-radius:16px 16px 0 0;padding:10px 16px;color:#fff}
+.magbtn{font-size:24px;font-weight:bold;padding:8px 18px;border-radius:12px;border:3px solid #ffd43b;background:#fff3bf;color:#5c4400}
+.magbtn.active{background:#ffd43b;box-shadow:0 0 0 5px rgba(255,212,59,.5)}
+.toolhint{font-size:18px}
+.tc{position:relative;background:#eee;border-radius:0 0 16px 16px;padding:18px 40px;transition:opacity .3s}
+.tc.guard{pointer-events:none;opacity:.85}
+#trapLayer.mag .tc,#trapLayer.mag .tc *{cursor:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><circle cx='16' cy='16' r='12' fill='rgba(255,255,255,0.45)' stroke='%23222' stroke-width='4'/><line x1='25' y1='25' x2='37' y2='37' stroke='%23222' stroke-width='6' stroke-linecap='round'/></svg>") 16 16,zoom-in !important}
+#trapLayer.mag .tc{outline:4px dashed #ffd43b;outline-offset:-4px}
+.again{position:absolute;z-index:120;background:#fff3bf;border:3px solid #f08c00;color:#7a4600;font-size:22px;font-weight:bold;padding:6px 14px;border-radius:14px;pointer-events:none;animation:fly 1.3s forwards}
+.stamp{position:absolute;left:50%;top:50%;font-size:90px;font-weight:900;color:#e03131;border:10px solid #e03131;border-radius:20px;padding:0 30px;transform:translate(-50%,-50%) rotate(-14deg);background:rgba(255,255,255,.75);animation:stamp .45s ease-out;z-index:5;white-space:nowrap}
+@keyframes stamp{from{transform:translate(-50%,-50%) rotate(-14deg) scale(3);opacity:0}to{transform:translate(-50%,-50%) rotate(-14deg) scale(1);opacity:1}}
+
+/* 結果面板 */
+.res{background:#fff;border-radius:22px;padding:28px 40px;text-align:center;width:680px}
+.res .rbig{font-size:54px;font-weight:900}
+.res-spot .rbig{color:#e03131}
+.res-safe .rbig{color:#1971c2}
+.res-caught .rbig{color:#e8590c}
+.res .rmid{font-size:28px;margin:10px 0;color:#333}
+.res .rname{font-size:28px;font-weight:bold;color:#0b4f7a;margin-top:10px}
+.res .rsay{font-size:24px;color:#333;margin:8px 0 6px;line-height:1.5}
+.res .soft{font-size:22px;color:#2b8a3e;margin-top:6px}
+.res .ticks{font-size:24px;color:#c92a2a;min-height:10px;line-height:1.5;margin:6px 0}
+.res .go{margin-top:18px}
+.hook{font-size:70px;display:inline-block;animation:reel 1.2s ease-in-out}
+@keyframes reel{0%{transform:translateY(80px) rotate(20deg)}40%{transform:translateY(-10px) rotate(-15deg)}70%{transform:translateY(10px) rotate(10deg)}100%{transform:none}}
+
+/* 廣告樣式（陷阱內容） */
+.ad{position:relative;width:600px;margin:0 auto;border-radius:20px;padding:22px 26px;text-align:center;color:#222;background:#fff;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.ad .ad-h{font-size:36px;font-weight:900;color:#d6336c}
+.ad .big{font-size:30px;font-weight:bold;margin:10px 0}
+.ad .mid{font-size:22px;margin:8px 0}
+.ad .red{color:#e03131}
+.ad .gold{color:#e67700}
+.ad .row{margin-top:10px}
+.ad .link{font-size:17px;color:#666;text-decoration:underline;cursor:pointer;padding:4px 8px}
+.ad .tiny{font-size:12px;margin-top:12px}
+.ad .gray{color:#c4c4c4}
+.btn-g,.btn-r,.btn-b,.btn-gold{font-size:24px;font-weight:bold;border:none;border-radius:16px;color:#fff;padding:12px 30px;margin-top:8px}
+.btn-g{background:linear-gradient(#51cf66,#2b8a3e);box-shadow:0 5px 0 #1b5e28}
+.btn-r{background:linear-gradient(#ff6b6b,#c92a2a);box-shadow:0 5px 0 #7a1414}
+.btn-b{background:linear-gradient(#4dabf7,#1971c2);box-shadow:0 5px 0 #0f4a85}
+.btn-gold{background:linear-gradient(#ffe066,#f08c00);box-shadow:0 5px 0 #a35f00;color:#5c3300}
+.huge{font-size:32px;padding:16px 48px}
+.btn-tiny{display:block;margin:14px auto 0;font-size:14px;color:#888;background:#eee;border:1px solid #ccc;border-radius:6px;padding:4px 10px}
+.blink{animation:blink .6s infinite alternate}
+@keyframes blink{from{filter:brightness(1);transform:scale(1)}to{filter:brightness(1.25);transform:scale(1.06)}}
+.flash{animation:blink .4s infinite alternate}
+.ad .x{position:absolute;right:12px;top:8px;font-size:26px;color:#555;cursor:pointer;width:40px;height:40px;line-height:40px;border-radius:50%;background:#eee}
+.ad .xs{position:absolute;right:4px;top:2px;font-size:13px;color:#aaa;cursor:pointer;padding:1px 4px}
+.ad .fakex{position:absolute;right:46px;top:16px;font-size:30px;width:54px;height:54px;line-height:54px;border-radius:50%;background:#e03131;color:#fff;cursor:pointer;font-weight:bold}
+.countdown{display:inline-block;font-size:34px;font-weight:900;color:#fff;background:#e03131;border-radius:14px;padding:6px 20px;margin:8px 0}
+.price{font-size:24px;margin:6px 0}
+.price s{color:#999}
+.stock{font-size:28px;font-weight:bold;margin:12px 0;background:#fff0f0;border:3px solid #e03131;border-radius:14px;padding:8px}
+.codebox{display:inline-block;min-width:330px;font-size:30px;letter-spacing:4px;background:#fff;border:3px solid #999;border-radius:10px;padding:8px 14px;margin:8px 0;cursor:text;color:#999}
+.codebox.sm{font-size:20px;letter-spacing:1px;min-width:280px}
+.codebox.filled{color:#111;border-color:#1971c2}
+.hint{font-size:15px;color:#888}
+.chkrow{display:inline-flex;align-items:center;gap:8px;font-size:19px;margin:10px 0;cursor:pointer;padding:4px 8px}
+.chk{display:inline-block;width:26px;height:26px;border:3px solid #555;border-radius:5px;background:#fff;position:relative}
+.chk.on::after{content:"✔";position:absolute;left:2px;top:-6px;font-size:24px;color:#1971c2;font-weight:bold}
+.rank{width:100%;border-collapse:collapse;font-size:19px;margin:8px 0}
+.rank td{padding:4px 8px;border-bottom:1px solid #eee;text-align:left}
+.rank tr.me td{background:#fff3bf;font-weight:bold}
+.warn{font-size:24px;font-weight:bold;color:#c92a2a;margin:10px 0}
+.sysbar{background:#1864ab;color:#fff;font-size:22px;font-weight:bold;margin:-22px -26px 14px;padding:10px;border-radius:20px 20px 0 0}
+.chathead{background:#7048e8;color:#fff;font-size:22px;font-weight:bold;margin:-22px -26px 14px;padding:10px 16px;border-radius:20px 20px 0 0;text-align:left}
+.chathead .online{font-size:15px;color:#b2f2bb;margin-left:10px}
+.bub{text-align:left;background:#f3f0ff;border-radius:16px;padding:10px 16px;font-size:22px;margin:10px 60px 10px 0;display:block}
+.reply{display:flex;gap:10px;align-items:center;justify-content:center;margin-top:8px}
+.url{color:#1c7ed6;text-decoration:underline;cursor:pointer;word-break:break-all}
+.cart-row{display:flex;align-items:center;gap:12px;font-size:23px;padding:10px 14px;border-bottom:2px solid #eee;text-align:left;cursor:pointer}
+.cart-row b{margin-left:auto}
+.total{font-size:26px;text-align:right;margin:12px 14px}
+.confetti{font-size:40px}
+.wait{font-size:16px;color:#999;margin-top:10px}
+.realx{background:#fff;border:1px solid #ccc;border-radius:4px}
+.ad-sale{background:linear-gradient(#fff9db,#ffe8cc);border:4px solid #e03131}
+.ad-prize{background:linear-gradient(#fff3bf,#ffd8a8);border:4px solid #f59f00}
+.ad-up{background:linear-gradient(#ebfbee,#d3f9d8);border:4px solid #2b8a3e}
+.ad-potion{background:linear-gradient(#f3d9fa,#e5dbff);border:4px solid #ae3ec9}
+.ad-revive{background:linear-gradient(#e7f5ff,#d0ebff)}
+.ad-trial{background:linear-gradient(#e6fcf5,#c3fae8);border:4px solid #0ca678}
+.ad-wheel{background:linear-gradient(#fff0f6,#ffdeeb);border:4px solid #d6336c;min-height:300px}
+
+/* 報告 */
+#scr-report .rp{position:absolute;left:280px;top:12px;width:1074px;height:740px;background:#fff;border-radius:20px;padding:14px 22px;border:4px solid #0f4a85}
+.rp h2{margin:0;font-size:32px;color:#0b4f7a}
+.rp .stats{display:flex;gap:12px;margin:6px 0}
+.rp .sb{flex:1;border-radius:14px;padding:6px 10px;text-align:center;font-size:20px;background:#f1f3f5}
+.rp .sb b{display:block;font-size:34px}
+.rp .ttl{display:flex;align-items:center;gap:16px;font-size:26px;font-weight:bold;color:#0b4f7a;margin:6px 0}
+.rp .ttl .te{font-size:48px}
+.rp .cmp{font-size:20px;color:#333;margin-left:auto;text-align:right}
+.rp .cmp .up{color:#e8590c;font-size:26px;font-weight:bold}
+.rp table{width:100%;border-collapse:collapse;font-size:17px}
+.rp th{background:#e7f5ff;text-align:left;padding:5px 8px;font-size:17px}
+.rp td{padding:2px 8px;border-bottom:1px solid #e9ecef;height:42px;line-height:1.25}
+.rp .rhead{display:flex;align-items:center;gap:16px}
+.rp .rhead h2{flex:1}
+.rp td.nm{font-weight:bold;white-space:nowrap}
+.rp td.rs{white-space:nowrap;font-weight:bold}
+.rs-spot{color:#e03131}.rs-safe{color:#1971c2}.rs-caught{color:#e8590c}.rs-none{color:#aaa}
+.rp .rfoot{display:flex;gap:16px;justify-content:flex-start;margin-top:8px;align-items:center}
+.rp .sb b.mny{font-size:26px;white-space:nowrap;line-height:1.6}
+.rp .zero{color:#e03131;font-weight:bold}
+
+/* 通用：toast、確認框 */
+#toast{position:absolute;left:50%;top:90px;transform:translateX(-50%);background:#fff3bf;border:3px solid #f08c00;border-radius:16px;font-size:26px;font-weight:bold;color:#5c3300;padding:10px 26px;z-index:150;display:none}
+#modal{position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center}
+#modal.on{display:flex}
+#modal .box{background:#fff;border-radius:22px;padding:30px 44px;text-align:center;font-size:28px;max-width:720px}
+#modal .btns{display:flex;gap:20px;justify-content:center;margin-top:24px}
+
+/* 老師揭秘模式 */
+#scr-tpw{text-align:center}
+#scr-tpw h2{font-size:44px;color:#0b4f7a;margin-top:200px}
+#tpw{font-size:30px;padding:10px 16px;border-radius:12px;border:3px solid #0f4a85;width:360px}
+#terr{color:#e03131;font-size:24px;height:34px;margin-top:10px}
+#scr-teacher{background:#f8f9fa}
+.ttabs{position:absolute;left:14px;top:10px;right:14px;height:60px;display:flex;gap:12px;align-items:center}
+.ttab{font-size:28px;font-weight:bold;padding:8px 28px;border-radius:14px;border:3px solid #1971c2;background:#fff;color:#1971c2}
+.ttab.on{background:#1971c2;color:#fff}
+.ttabs .tt{margin-left:auto;font-size:26px;color:#0b4f7a;font-weight:bold}
+.tlist{position:absolute;left:14px;top:80px;width:330px;bottom:14px;display:flex;flex-direction:column;gap:6px}
+.tli{font-size:24px;padding:9px 12px;border-radius:12px;background:#fff;border:2px solid #dee2e6;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tli.on{background:#fff3bf;border-color:#f08c00;font-weight:bold}
+.tmain{position:absolute;left:358px;top:80px;right:14px;bottom:14px;display:flex;gap:18px}
+.tpv{width:560px;height:100%;background:#dee2e6;border-radius:16px;position:relative;overflow:hidden;display:flex;justify-content:center;align-items:flex-start;padding-top:16px}
+.tpv .pv{position:relative;transform-origin:top center;pointer-events:none}
+.redring{position:absolute;border:6px solid #e03131;border-radius:50%;box-shadow:0 0 0 4px rgba(255,255,255,.7);animation:ring 1.2s infinite alternate}
+@keyframes ring{from{transform:scale(1)}to{transform:scale(1.06)}}
+.ttext{flex:1;font-size:26px;color:#222;line-height:1.5;display:flex;flex-direction:column;gap:14px}
+.ttext .tn{font-size:40px;font-weight:900;color:#0b4f7a}
+.ttext .tc2{font-size:26px;background:#fff3bf;border-radius:12px;padding:4px 14px;align-self:flex-start}
+.ttext .say{font-size:30px}
+.ttext .q{font-size:28px;background:#e7f5ff;border-radius:14px;padding:12px 16px}
+.ttext .nav{margin-top:auto;margin-bottom:30px;font-size:24px;color:#888}
+.tsum{flex:1;background:#fff;border-radius:18px;padding:20px 34px}
+.tsum h2{font-size:40px;margin:0 0 14px;color:#0b4f7a}
+.tsum .m{display:flex;align-items:center;gap:20px;font-size:30px;padding:14px 0;border-bottom:2px dashed #dee2e6}
+.tsum .m .k{font-size:44px;font-weight:900;color:#e03131;width:150px;white-space:nowrap}
+.tsum .m .d{flex:1}
+.tsum .m .a{font-weight:bold;color:#2b8a3e}
+pre.selftest{position:fixed;left:10px;top:10px;right:10px;bottom:10px;overflow:auto;background:#111;color:#9f9;font-size:14px;z-index:5000;padding:10px;margin:0;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div id="safeTag">教學遊戲・不會真的扣錢</div>
+<div id="stage">
+  <div id="card"></div>
+
+  <div class="screen" id="scr-start">
+    <div class="fishdeco" style="top:20px">🐟</div>
+    <div class="fishdeco" style="top:640px;animation-delay:-4s">🐠 🐡</div>
+    <div class="title">🎣 小心別當大魚</div>
+    <div class="sub">玩遊戲的時候，有人想「釣」你的錢。<br>當個聰明的偵探，把陷阱找出來！</div>
+    <div class="roundbtns">
+      <button class="bigbtn blue" id="r1btn">第一堂<span class="st" id="r1st"></span></button>
+      <button class="bigbtn orange" id="r2btn">第二堂<span class="st" id="r2st"></span></button>
+    </div>
+  </div>
+
+  <div class="screen" id="scr-get">
+    <h2>🪪 這是你的偵探證！</h2>
+    <div class="bigcard" id="bigcard"></div>
+    <div class="getnote">上面的電話和卡號都是<b>假的</b>，只在遊戲裡用。<br>零用錢是遊戲幣，請好好守住！</div>
+    <button class="bigbtn" id="enterLobby">進入遊樂場 ▶</button>
+  </div>
+
+  <div class="screen" id="scr-lobby">
+    <div class="lhead">🎡 遊樂場大廳</div>
+    <div class="lsub">四款遊戲都要玩，順序隨你選。玩的時候小心陷阱！</div>
+    <div class="lside">🔍 <b>偵探小撇步</b><br>看到怪怪的廣告，先按 <b>🔍放大鏡</b>，再點可疑的地方，就能識破它！</div>
+    <div class="tiles" id="tiles"></div>
+    <div class="lfoot">
+      <button class="smbtn" id="backStart">⬅ 回首頁</button>
+      <button class="smbtn" id="restartBtn">🧹 重新開始（清除這台電腦的紀錄）</button>
+      <span class="grow"></span>
+      <button class="bigbtn orange" id="reportBtn" style="display:none">📜 看我的揭秘報告</button>
+    </div>
+  </div>
+
+  <div class="screen" id="scr-game">
+    <div id="gbar"><button class="smbtn" id="toLobby">🏠 回大廳</button><span id="gtitle"></span><span id="gprog"></span></div>
+    <canvas id="cv" width="1072" height="640"></canvas>
+    <div id="ghelp"></div>
+    <div id="gmsg"><div class="box"><div class="h" id="gmh"></div><div class="m" id="gmm"></div><div class="btns" id="gmb"></div></div></div>
+  </div>
+
+  <div class="screen" id="scr-report"><div class="rp" id="rp"></div></div>
+
+  <div class="screen" id="scr-tpw">
+    <h2>👩‍🏫 揭秘模式（老師用）</h2>
+    <input type="password" id="tpw" placeholder="請輸入老師密碼" autocomplete="off">
+    <button class="bigbtn blue" id="tpwBtn" style="font-size:28px;padding:10px 28px;margin-left:10px">進入</button>
+    <div id="terr"></div>
+  </div>
+
+  <div class="screen" id="scr-teacher">
+    <div class="ttabs"><button class="ttab" data-r="1">第一堂</button><button class="ttab" data-r="2">第二堂</button><span class="tt">🎣 小心別當大魚・揭秘時間　←　→ 切換</span></div>
+    <div class="tlist" id="tlist"></div>
+    <div class="tmain" id="tmain"></div>
+  </div>
+
+  <div id="trapLayer"></div>
+  <div id="toast"></div>
+  <div id="modal"><div class="box"><div id="mtext"></div><div class="btns"><button class="bigbtn gray" id="mno">取消</button><button class="bigbtn orange" id="myes">確定</button></div></div></div>
+</div>
+
+<script>
+'use strict';
+const $=s=>document.querySelector(s);
+const Q=new URLSearchParams(location.search);
+const FAST=Q.has('fast')?4:1;
+const KEY='bigfish_v1';
+const FISH=[['小丑魚','🐠'],['鮪魚','🐟'],['河豚','🐡'],['鬥魚','🐟'],['熱帶魚','🐠'],['比目魚','🐟'],['燈籠魚','🐟'],['旗魚','🐟'],['鰻魚','🐟'],['鮭魚','🐟'],['飛魚','🐟'],['神仙魚','🐠']];
+const PHONE='0900-000-000', CARDNO='0000-1234-5678-9999';
+const GAMES=[
+  {id:'run', icon:'🐱',name:'跳跳貓跑酷',rule:'按空白鍵跳，跑到 500 公尺',traps:[1,2]},
+  {id:'coin',icon:'🪙',name:'接金幣',rule:'← → 移動籃子，60 秒接到 30 枚',traps:[3,4]},
+  {id:'mole',icon:'🔨',name:'打地鼠',rule:'用滑鼠點地鼠，45 秒打到 20 隻',traps:[5,6]},
+  {id:'race',icon:'🏎️',name:'閃避賽車',rule:'← → 換車道，撐過 60 秒',traps:[7,8]}
+];
+const CAT={'急':'🕐','送':'🎁','要':'🔢','藏':'👀','逼':'😳'};
+const COST={1:397,2:397,3:300,4:300,5:150,6:150,7:200,8:200};
+const STEPS=n=>n<=2?[[1,'付了 1 元'],[99,'第 1 週 自動扣 99 元'],[99,'第 2 週 自動扣 99 元'],[99,'第 3 週 自動扣 99 元'],[99,'第 4 週 自動扣 99 元']]:[[COST[n],n<=4?'你的帳號被盜了！':'付了 '+COST[n]+' 元']];
+const RES_LABEL={spot:'🔍 識破',safe:'🚪 安全離開',caught:'🐟 中招'};
+
+/* ===== 陷阱資料（玩家彈窗與老師重現圖共用同一份 html） ===== */
+const T={1:{
+1:{name:'隱藏的自動扣款',cat:'藏',say:'便宜價錢旁邊，用又小又淡的字藏著「每週扣錢」。付錢前要看完所有的字。',q:'為什麼重要的事，要寫得那麼小、那麼淡？',
+ html:r=>`<div class="ad ad-revive"><div class="ad-h">😿 跳跳貓倒下了！</div><div class="big">只要 <b class="red">1 元</b> 立刻復活！</div><button class="btn-g huge" data-act="caught">💰 1 元復活</button><div class="row"><span class="link" data-act="safe">不用了，重新開始</span></div><div class="tiny gray" data-hot>※ 購買即表示同意之後每週自動扣款 99 元</div></div>`},
+2:{name:'製造急迫感',cat:'急',say:'倒數計時是要你來不及想，就先按下去。',q:'真的時間到了，會怎樣嗎？',
+ html:r=>`<div class="ad ad-sale"><span class="x" data-act="safe">✕</span><div class="ad-h flash">⚡ 限時特價 ⚡</div><div class="big">👟 超級跳鞋</div><div class="price"><s>原價 999 元</s>　現在只要 <b class="red">99 元</b>！</div><div class="countdown" data-hot>⏰ 倒數 <span class="cd">10</span> 秒！</div><br><button class="btn-r huge" data-act="caught">馬上搶購！</button></div>`,
+ setup:el=>{let n=10;const c=el.querySelector('.cd');const id=setInterval(()=>{n=n<=1?10:n-1;c.textContent=n;},1000);return()=>clearInterval(id);}},
+3:{name:'天上掉下來的大獎',cat:'送',say:'你什麼都沒做就中大獎，通常是騙人的。天下沒有白吃的午餐。',q:'這麼多人在玩，為什麼剛好是你中獎？',
+ html:r=>`<div class="ad ad-prize"><div class="confetti">🎉🎊🎉🎊🎉</div><div class="ad-h">恭喜你！</div><div class="big" data-hot>你是第 <b class="red">1,000,000</b> 名玩家！</div><div class="big">獲得 <b class="gold">10000 金幣</b>！</div><button class="btn-g huge" data-act="caught">🎁 立刻領獎</button><div class="row"><span class="link" data-act="safe">關閉</span></div></div>`},
+4:{name:'騙驗證碼',cat:'要',say:'驗證碼就像家裡的鑰匙，給了別人，別人就能進你的帳號。誰要都不能給。',q:'如果有人跟爸媽要驗證碼，你會怎麼做？',
+ html:r=>`<div class="ad ad-prize"><div class="ad-h">🎁 領獎最後一步！</div><div class="mid">請爸媽把手機收到的<b>驗證碼</b>給你，輸入在這裡：</div><div class="codebox" data-hot data-fill="4 8 2 9 1 6">＿ ＿ ＿ ＿ ＿ ＿</div><div class="hint">（點框框會自動填入）</div><button class="btn-g huge" data-act="caught">送出驗證碼</button><div class="row"><span class="link" data-act="safe">我不要領了</span></div></div>`},
+5:{name:'讓你不好意思拒絕',cat:'逼',say:'故意把「不要」寫得很丟臉，讓你不好意思按。不買一點都不丟臉！',q:'按「不要」，真的代表你很弱嗎？',
+ html:r=>`<div class="ad ad-up"><div class="ad-h">🔨 黃金鐵鎚</div><div class="mid">一次打兩隻地鼠！只要 <b class="red">150 元</b></div><button class="btn-g huge" data-act="caught">💪 我要變強！</button><button class="btn-tiny" data-hot data-act="safe">不要，我不想變強</button></div>`},
+6:{name:'找不到的關閉鍵',cat:'藏',say:'大大的假叉叉其實是廣告，真的關閉鍵被藏得很小。',q:'你怎麼分辨哪一個才是真的關閉？',
+ html:r=>`<div class="ad ad-potion"><span class="xs" data-act="safe">×</span><span class="fakex" data-hot data-act="caught" data-msg="那是假的叉叉，按了反而打開廣告！">✖</span><div class="ad-h">🐢 地鼠變慢藥水</div><div class="big">喝了，地鼠變超慢！</div><div class="mid">只要 <b class="red">150 元</b></div><button class="btn-g huge" data-act="caught">立刻購買</button></div>`},
+7:{name:'大家都買了',cat:'逼',say:'說「大家都買了」，是要你怕跟別人不一樣。別人買，不代表你也要買。',q:'排行榜上的人，你真的認識嗎？',
+ html:r=>`<div class="ad ad-sale"><div class="ad-h">🏆 本週排行榜</div><table class="rank"><tr><td>1</td><td>🦈 閃電阿強</td><td>🚀 已購買加速器</td></tr><tr><td>2</td><td>🐙 小章章</td><td>🚀 已購買加速器</td></tr><tr><td>3</td><td>🐬 海豚妹妹</td><td>🚀 已購買加速器</td></tr><tr class="me"><td>99</td><td>${r.emo} ${r.fish}（你）</td><td>❌ 沒有加速器</td></tr></table><div class="warn" data-hot>😱 你的同學都買了加速器，只剩你沒有！</div><button class="btn-r huge" data-act="caught">我也要買！200 元</button><div class="row"><span class="link" data-act="safe">不用了</span></div></div>`},
+8:{name:'偷偷幫你勾選',cat:'藏',say:'框框已經偷偷幫你打勾，不注意就會每個月被扣錢。',q:'按「確認」之前，要檢查哪些地方？',
+ subMsg:'你把「自動續訂」的勾勾拿掉了，沒有被偷扣錢！',
+ html:r=>`<div class="ad ad-up"><div class="ad-h">⚡ 閃閃點數卡儲值</div><div class="mid">去超商買<b>閃閃點數卡</b>，輸入序號就能加速！</div><div class="codebox sm" data-fill="SS-0000-1234（遊戲用）">點這裡輸入序號</div><br><span class="chkrow" data-hot data-act="toggle"><span class="chk on"></span>同意每月自動續訂 200 元</span><br><button class="btn-g huge" data-act="pay">確認儲值</button><div class="row"><span class="link" data-act="safe">取消</span></div></div>`}
+},2:{
+1:{name:'隱藏的自動扣款（免費試用）',cat:'藏',say:'嘴巴說免費，小字卻寫第 4 天開始扣錢。免費試用常常會自動變成付費。',q:'「免費」真的都不用錢嗎？',
+ html:r=>`<div class="ad ad-trial"><div class="ad-h">🎁 免費試用 🎁</div><div class="big">👟 超級跳鞋 免費用 3 天！</div><div class="mid">跳得又高又遠！</div><button class="btn-g huge" data-act="caught">免費領取</button><div class="row"><span class="link" data-act="safe">不用了</span></div><div class="tiny gray" data-hot>※ 試用期滿，第 4 天起每週自動扣款 99 元</div></div>`},
+2:{name:'製造急迫感（只剩幾組）',cat:'急',say:'數字一直變少，是要你急著搶。真的賣完了也沒關係。',q:'數字一直跳，真的有人在買嗎？',
+ html:r=>`<div class="ad ad-sale"><span class="x" data-act="safe">✕</span><div class="ad-h flash">🔥 無敵護盾 熱賣中 🔥</div><div class="stock" data-hot>只剩 <b class="red st">3</b> 組！已經有 <b class="ppl">128</b> 人在搶！</div><div class="price">只要 <b class="red">99 元</b></div><button class="btn-r huge" data-act="caught">快搶！</button></div>`,
+ setup:el=>{let s=3,p=128;const st=el.querySelector('.st'),pp=el.querySelector('.ppl');const id=setInterval(()=>{s=s<=1?3:s-1;p+=1+Math.floor(Math.random()*5);st.textContent=s;pp.textContent=p;},800);return()=>clearInterval(id);}},
+3:{name:'天上掉下來的大獎（補償金幣）',cat:'送',say:'假裝成系統公告，說你的帳號有問題，騙你點進去「領補償」。',q:'真的系統出問題，會叫你點廣告領金幣嗎？',
+ html:r=>`<div class="ad ad-revive"><div class="sysbar">📢 系統公告</div><div class="big red" data-hot>⚠️ 你的帳號異常！</div><div class="mid">點這裡領取補償金幣 <b class="gold">5000</b> 枚</div><button class="btn-b huge" data-act="caught">領取補償</button><div class="row"><span class="link" data-act="safe">關閉</span></div></div>`},
+4:{name:'騙卡號',cat:'要',say:'客服再可愛，也不會跟你要卡號。卡號、密碼、驗證碼都不能給別人。',q:'誰可以知道你的卡號？',
+ html:r=>`<div class="ad"><div class="chathead">🧚 客服小精靈 <span class="online">● 線上</span></div><div class="bub">嗨嗨～我是客服小精靈 ✨</div><div class="bub" data-hot>把你偵探證上的<b>卡號</b>告訴我，我幫你加 5000 金幣喔～💕</div><div class="reply"><div class="codebox sm" data-fill="${CARDNO}">點這裡輸入…</div><button class="btn-b" data-act="caught">送出</button></div><div class="row"><span class="link" data-act="safe">結束對話</span></div></div>`},
+5:{name:'讓你不好意思拒絕（弱雞）',cat:'逼',say:'拒絕的按鈕故意寫「弱雞」，讓你不好意思按。不買才不是弱雞！',q:'不想買的時候，你可以怎麼想？',
+ html:r=>`<div class="ad ad-up"><div class="ad-h">✨ 黃金鐵鎚 ✨</div><div class="mid">一次打兩隻地鼠！只要 <b class="red">150 元</b></div><button class="btn-gold huge blink" data-act="caught">✨ 升級黃金鐵鎚 ✨</button><button class="btn-tiny" data-hot data-act="safe">我寧願當弱雞 🐔</button></div>`},
+6:{name:'找不到的關閉鍵（假下一關）',cat:'藏',say:'廣告假裝成「下一關」按鈕，真的關閉鍵要等很久，還會亂跑。',q:'按鈕上寫的字，一定是真的嗎？',
+ html:r=>`<div class="ad ad-wheel"><div class="ad-h">🎰 幸運大轉盤</div><div class="big">轉一次只要 150 元<br>大獎等你拿！</div><button class="btn-g huge" data-hot data-act="caught" data-msg="那不是下一關，是廣告的按鈕！">下一關 ▶</button><div class="wait">5 秒後可以關閉…</div><span class="xs realx" data-act="safe" style="display:none">× 關閉</span></div>`,
+ setup:el=>{let n=5;const w=el.querySelector('.wait'),x=el.querySelector('.realx');let mv=0;
+  const place=()=>{const sp=[[4,2],[540,2],[4,270],[520,270],[260,2]];const p=sp[Math.floor(Math.random()*sp.length)];x.style.left=p[0]+'px';x.style.top=p[1]+'px';x.style.right='auto';};
+  const id=setInterval(()=>{n--;if(n>0)w.textContent=n+' 秒後可以關閉…';else if(n===0){w.textContent='';x.style.display='block';place();mv=setInterval(place,1800);}},1000);
+  return()=>{clearInterval(id);clearInterval(mv);};}},
+7:{name:'大家都買了（假好友）',cat:'逼',say:'朋友突然傳奇怪的連結，可能是他的帳號被盜了。先當面問清楚。',q:'怎麼確認真的是小明傳的？',
+ html:r=>`<div class="ad"><div class="chathead">💬 好友訊息</div><div class="bub">小明：嘿！我送你一個加速器 🎁</div><div class="bub">小明：點這個連結領取 👉 <span class="url" data-hot data-act="caught" data-msg="這個奇怪的連結會騙走你的帳號！">http://miao-g1ft.xyz/free</span></div><button class="btn-b" data-act="caught" data-msg="這個奇怪的連結會騙走你的帳號！">🎁 立刻領取</button><div class="row"><span class="link" data-act="safe">先不要點，下課問小明</span></div></div>`},
+8:{name:'偷偷幫你勾選（多一項）',cat:'藏',say:'購物車偷偷多了一項，還已經勾好。付錢前要一項一項看清楚。',q:'結帳前，為什麼要看總共多少錢？',
+ subMsg:'你把偷偷多出來的 VIP 月費拿掉了，沒有被多扣錢！',
+ html:r=>`<div class="ad"><div class="ad-h">🛒 結帳</div><div class="cart-row"><span class="chk on"></span>🚀 加速器 ×1<b>99 元</b></div><div class="cart-row" data-hot data-act="toggle"><span class="chk on"></span>👑 VIP 月費<b>199 元／每月</b></div><div class="total">合計：<b class="tot">298</b> 元</div><button class="btn-g huge" data-act="pay">確認付款</button><div class="row"><span class="link" data-act="safe">取消</span></div></div>`,
+ onToggle:el=>{const on=el.querySelector('[data-act=toggle] .chk').classList.contains('on');el.querySelector('.tot').textContent=on?298:99;}}
+}};
+const FIVE=[['🕐 急','倒數計時、只剩幾組','先停下來'],['🎁 送','中大獎、免費送','天下沒有白吃的午餐'],['🔢 要','要驗證碼、卡號、密碼','絕對不給'],['👀 藏','小字、預設打勾、假的關閉鍵','仔細看'],['😳 逼','不好意思拒絕、說大家都買了','不用理它']];
+
+/* ===== 狀態（只存在這台電腦） ===== */
+function blank(){return {v:1,cur:0,r:{}};}
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.v===1&&s.r&&typeof s.r==='object')return s;}catch(e){}return null;}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+let S=load()||blank();
+const R=()=>S.r[S.cur];
+function newRound(){const f=FISH[Math.floor(Math.random()*FISH.length)];return {fish:f[0]+'偵探',emo:f[1],money:1000,res:{},done:{}};}
+function record(r,n,kind){if(r.res[n])return 0;r.res[n]=kind;let cost=0;if(kind==='caught'){cost=Math.min(COST[n],r.money);r.money-=cost;}return cost;}
+function counts(r){const c={spot:0,safe:0,caught:0};if(r)for(let n=1;n<=8;n++)if(r.res[n])c[r.res[n]]++;return c;}
+function titleOf(s){return s>=7?['🦈','鯊魚級偵探']:s>=4?['🐬','海豚級偵探']:['🐟','小心別當大魚！'];}
+
+/* ===== 畫面縮放 ===== */
+const stage=$('#stage');let K=1;
+function fit(){K=Math.min(innerWidth/1366,innerHeight/768);stage.style.transform=`scale(${K})`;stage.style.left=(innerWidth-1366*K)/2+'px';stage.style.top=(innerHeight-768*K)/2+'px';}
+addEventListener('resize',fit);fit();
+function toStage(cx,cy){const b=stage.getBoundingClientRect();return [(cx-b.left)/K,(cy-b.top)/K];}
+
+let curScreen='';
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id==='scr-'+id));curScreen=id;
+  $('#card').style.display=(id==='lobby'||id==='game'||id==='report')?'block':'none';if(R())renderCard();}
+let toastT=0;
+function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(toastT);toastT=setTimeout(()=>e.style.display='none',2000);}
+function confirmBox(text,yes){$('#mtext').innerHTML=text;$('#modal').classList.add('on');$('#mno').onclick=()=>$('#modal').classList.remove('on');$('#myes').onclick=()=>{$('#modal').classList.remove('on');yes();};}
+
+/* ===== 偵探證 ===== */
+let dispMoney=null;
+function renderCard(){const r=R();if(!r)return;const m=dispMoney==null?r.money:dispMoney;
+  $('#card').innerHTML=`<div class="ct">🪪 偵探證</div><div class="cn">${r.emo} ${r.fish}</div><div class="cr">📞 ${PHONE}<br>💳 ${CARDNO}<br><small>（假資料・遊戲用）</small></div><div class="money" id="cmoney">💰 零用錢 ${m} 元</div><div class="bdg">🏅 偵探徽章 × ${counts(r).spot}</div>`;}
+function bigCard(r){return `<div style="font-size:22px;color:#8a6420;font-weight:bold;letter-spacing:3px">🪪 偵探證・第${S.cur===1?'一':'二'}堂</div><div class="cn">${r.emo} ${r.fish}</div><div class="row2">📞 電話：${PHONE}<br>💳 卡號：${CARDNO} <small>（遊戲用）</small><br>💰 零用錢：<b>1000 元</b>（遊戲幣）</div>`;}
+
+/* ===== 開始／大廳 ===== */
+function renderStart(){[1,2].forEach(k=>{const r=S.r[k];$('#r'+k+'st').textContent=r?(GAMES.every(g=>r.done[g.id])?'✅ 已完成':'▶ 繼續玩'):'';});show('start');}
+function pickRound(k){S.cur=k;if(!S.r[k]){S.r[k]=newRound();save();$('#bigcard').innerHTML=bigCard(S.r[k]);show('get');}else{save();toLobby();}}
+function toLobby(){if(G){G.halt=true;}G=null;$('#gmsg').classList.remove('on');const r=R();
+  $('#tiles').innerHTML=GAMES.map(g=>{const d=r.done[g.id];const sp=g.traps.filter(n=>r.res[n]==='spot').length;
+    return `<div class="tile ${d?'done':''}" data-g="${g.id}"><div class="ti">${g.icon}</div><div><div class="tn">${g.name}</div><div class="tr">${g.rule}</div><div class="ts">${d?`識破 ${sp} / 2 個陷阱`:''}</div></div>${d?'<div class="tick">✅</div>':''}</div>`;}).join('');
+  document.querySelectorAll('.tile').forEach(t=>t.onclick=()=>startGame(t.dataset.g));
+  $('#reportBtn').style.display=GAMES.every(g=>r.done[g.id])?'':'none';show('lobby');}
+
+/* ===== 陷阱彈窗 ===== */
+let trapOpen=null;
+function openTrap(n,cb){
+  const r=R(),t=T[S.cur][n];if(document.activeElement)document.activeElement.blur();
+  const L=$('#trapLayer');L.className='on';
+  L.innerHTML=`<div class="tbox"><div class="tool"><button class="magbtn" id="magBtn">🔍 放大鏡</button><span class="toolhint">覺得怪怪的？先按 🔍，再點可疑的地方。</span></div><div class="tc guard" id="tc">${t.html(r)}</div></div>`;
+  const tc=$('#tc');trapOpen={n,cb,t,mag:false,done:false,cleanup:t.setup?t.setup(tc):null};
+  setTimeout(()=>tc.classList.remove('guard'),700);
+  $('#magBtn').onclick=()=>setMag(!trapOpen.mag);
+  tc.addEventListener('click',onTrapClick,true);
+}
+function setMag(on){if(!trapOpen)return;trapOpen.mag=on;$('#trapLayer').classList.toggle('mag',on);const b=$('#magBtn');if(b){b.classList.toggle('active',on);b.textContent=on?'🔍 取消放大鏡':'🔍 放大鏡';}}
+function onTrapClick(e){
+  if(!trapOpen||trapOpen.done)return;e.preventDefault();e.stopPropagation();const t=trapOpen.t;
+  if(trapOpen.mag){if(e.target.closest('[data-hot]'))finishTrap('spot');else again(e);return;}
+  const f=e.target.closest('[data-fill]');if(f){f.textContent=f.dataset.fill;f.classList.add('filled');return;}
+  const a=e.target.closest('[data-act]');if(!a)return;const act=a.dataset.act;
+  if(act==='toggle'){a.querySelector('.chk').classList.toggle('on');if(t.onToggle)t.onToggle($('#tc'));return;}
+  if(act==='pay'){const c=$('#tc [data-act=toggle] .chk');if(c&&!c.classList.contains('on'))finishTrap('safe',t.subMsg);else finishTrap('caught');return;}
+  if(act==='caught')finishTrap('caught',a.dataset.msg||'');else if(act==='safe')finishTrap('safe');
+}
+function again(e){const [x,y]=toStage(e.clientX,e.clientY);const d=document.createElement('div');d.className='again';d.textContent='再看看？🤔';d.style.left=(x-50)+'px';d.style.top=(y-50)+'px';stage.appendChild(d);setTimeout(()=>d.remove(),1300);}
+function finishTrap(kind,extra){
+  const o=trapOpen;if(!o||o.done)return;o.done=true;if(o.cleanup)o.cleanup();setMag(false);
+  const r=R(),n=o.n,t=o.t,before=r.money;record(r,n,kind);save();
+  const L=$('#trapLayer');const name=`這招叫「${t.name}」`;
+  const panel=(cls,inner)=>{L.innerHTML=`<div class="res ${cls}">${inner}<div class="go"><button class="bigbtn" id="goBtn">繼續玩 ▶</button></div></div>`;$('#goBtn').onclick=closeTrap;};
+  if(kind==='spot'){
+    const s=document.createElement('div');s.className='stamp';s.textContent='識破！';$('#tc').appendChild(s);renderCard();
+    setTimeout(()=>panel('res-spot',`<div class="rbig">🔍 識破！</div><div class="rmid">🏅 得到一枚偵探徽章！</div><div class="rname">${name}</div><div class="rsay">${t.say}</div>`),1100);
+  }else if(kind==='safe'){
+    panel('res-safe',`<div class="rbig">🚪 安全離開</div><div class="rmid">${extra||'你沒有付錢，很好！'}</div><div class="rsay">🤔 可是……你知道哪裡怪嗎？<br>下次試試看用 🔍 把它找出來！</div>`);
+  }else{
+    const steps=STEPS(n);
+    panel('res-caught',`<div class="hook">🎣🐟</div><div class="rbig">你被釣到了！</div>${extra?`<div class="rmid">${extra}</div>`:''}<div class="ticks" id="ticks"></div><div class="rname">${name}</div><div class="rsay">${t.say}</div><div class="soft">很多大人也會被騙喔！下次小心就好。</div>`);
+    const g=$('#goBtn');g.disabled=true;g.style.opacity=.4;let m=before,i=0;dispMoney=m;renderCard();
+    const tick=()=>{if(i>=steps.length||m<=0){if(m<=0&&i<steps.length)$('#ticks').innerHTML+='😭 零用錢被扣光了！<br>';dispMoney=null;renderCard();g.disabled=false;g.style.opacity=1;return;}
+      const [v,label]=steps[i++];const d=Math.min(v,m);m-=d;dispMoney=m;$('#ticks').innerHTML+=`💸 ${label}　<b>-${d}</b><br>`;renderCard();const cm=$('#cmoney');if(cm)cm.classList.add('hit');
+      const f=document.createElement('div');f.className='fly';f.textContent='-'+d;f.style.left='190px';f.style.top='150px';stage.appendChild(f);setTimeout(()=>f.remove(),1000);
+      setTimeout(tick,steps.length>1?550:700);};
+    setTimeout(tick,600);
+  }
+}
+function closeTrap(){const o=trapOpen;const L=$('#trapLayer');L.className='';L.innerHTML='';trapOpen=null;dispMoney=null;renderCard();if(o&&o.cb)o.cb(R().res[o.n]);}
+
+/* ===== 小遊戲引擎 ===== */
+const cv=$('#cv'),ctx=cv.getContext('2d'),CW=1072,CH=640;
+let G=null,last=0;const keys={};
+function emo(t,x,y,size){ctx.font=size+'px "Segoe UI Emoji","Apple Color Emoji",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,x,y);}
+function txt(t,x,y,size,color,align){ctx.font='bold '+size+'px "Microsoft JhengHei",sans-serif';ctx.fillStyle=color||'#222';ctx.textAlign=align||'center';ctx.textBaseline='middle';ctx.fillText(t,x,y);}
+function gameTrap(n,cb){if(R().res[n]||trapOpen)return false;openTrap(n,k=>{if(G&&G.onResume)G.onResume(k);if(cb)cb(k);});return true;}
+function gmsg(h,m,btns){$('#gmh').innerHTML=h;$('#gmm').innerHTML=m;const b=$('#gmb');b.innerHTML='';btns.forEach(([t,fn],i)=>{const e=document.createElement('button');e.className='bigbtn'+(i?' blue':'');e.textContent=t;e.onclick=fn;b.appendChild(e);});$('#gmsg').classList.add('on');G.msgFn=btns[0][1];}
+function hideGmsg(){$('#gmsg').classList.remove('on');if(G)G.msgFn=null;}
+function startGame(id){const def=GAMES.find(g=>g.id===id);G=MAKE[id]();G.id=id;G.def=def;$('#gtitle').textContent=def.icon+' '+def.name;$('#ghelp').innerHTML=G.help;hideGmsg();G.reset(true);show('game');}
+function winGame(){if(!G)return;G.halt=true;const pend=G.def.traps.filter(n=>!R().res[n]);
+  if(pend.length){openTrap(pend[0],()=>winGame());return;}
+  R().done[G.id]=true;save();const g=G;
+  gmsg('🎉 過關！',`你完成了「${g.def.name}」！`,[['回大廳',toLobby],['再玩一次',()=>{hideGmsg();g.reset(true);}]]);}
+function failGame(h,m){G.halt=true;const g=G;gmsg(h,m,[['再試一次（空白鍵）',()=>{hideGmsg();g.reset(false);}]]);}
+function frame(ts){const dt=Math.min(0.05,((ts-last)/1000)||0)*FAST;last=ts;
+  if(G&&curScreen==='game'){if(!trapOpen&&!G.halt&&!$('#gmsg').classList.contains('on'))G.update(dt);G.draw();$('#gprog').textContent=G.prog();}
+  requestAnimationFrame(frame);}
+requestAnimationFrame(frame);
+function sky(top,bottom){const g=ctx.createLinearGradient(0,0,0,CH);g.addColorStop(0,top);g.addColorStop(1,bottom);ctx.fillStyle=g;ctx.fillRect(0,0,CW,CH);}
+function bar(p,color){ctx.fillStyle='rgba(0,0,0,.15)';ctx.fillRect(20,16,CW-40,16);ctx.fillStyle=color;ctx.fillRect(20,16,(CW-40)*Math.min(1,p),16);}
+
+const MAKE={
+/* 跳跳貓跑酷 */
+run(){const GY=520,CX=170,PPM=70,SP=6;const g={help:'<b>空白鍵</b> 或 <b>↑</b> 跳<br>也可以點畫面跳<br><br>跑到 <b>500</b> 公尺過關<br>每 100 公尺有存檔點'};
+ g.reset=full=>{if(full)g.cp=0;g.dist=g.cp;g.y=0;g.vy=0;g.obs=[];g.gap=420;g.t=0;g.halt=false;};
+ g.jump=()=>{if(g.y>=0){g.vy=-920;}};
+ g.key=k=>{if(k===' '||k==='ArrowUp')g.jump();};g.click=()=>g.jump();
+ g.onResume=()=>{g.obs=g.obs.filter(o=>o.x>CX+380);};
+ g.die=()=>{const r=R();
+  if(S.cur===1&&!r.res[1]){g.halt=true;openTrap(1,k=>{g.halt=false;g.y=0;g.vy=0;
+    if(k==='safe'){g.reset(false);toast('從 '+g.cp+' 公尺重新開始');}else{g.obs=g.obs.filter(o=>o.x>CX+380);if(k==='spot')toast('🏅 識破獎勵：免費復活！');}});return;}
+  failGame('😵 跌倒了！',`從 <b>${g.cp}</b> 公尺再試一次`);};
+ g.update=dt=>{const r=R();g.t+=dt;
+  if(S.cur===2&&!r.res[1]&&g.t>0.8){gameTrap(1);return;}
+  if(g.dist>=120&&!r.res[2]){gameTrap(2);return;}
+  if(S.cur===1&&!r.res[1]&&g.dist>=300){g.die();return;}
+  g.dist+=SP*dt;g.cp=Math.max(g.cp,Math.floor(g.dist/100)*100);
+  g.vy+=2600*dt;g.y+=g.vy*dt;if(g.y>0){g.y=0;g.vy=0;}
+  const dx=SP*PPM*dt;g.obs.forEach(o=>o.x-=dx);g.obs=g.obs.filter(o=>o.x>-60);
+  g.gap-=dx;if(g.gap<=0&&g.dist<490){g.obs.push({x:CW+40,e:Math.random()<.5?'🌵':'🪨'});g.gap=400+Math.random()*450;}
+  for(const o of g.obs){if(Math.abs(o.x-CX)<36&&g.y>-46){g.die();return;}}
+  if(g.dist>=500)winGame();};
+ g.draw=()=>{sky('#a5d8ff','#e7f5ff');ctx.fillStyle='#8ce99a';ctx.fillRect(0,GY+28,CW,CH-GY);ctx.fillStyle='#69db7c';ctx.fillRect(0,GY+28,CW,10);
+  for(let m=Math.ceil((g.dist-3)/50)*50;m<g.dist+16;m+=50){const x=CX+(m-g.dist)*PPM;if(m>500)break;
+    if(m===500)emo('🏁',x,GY-20,70);else{ctx.fillStyle='#fff';ctx.fillRect(x-2,GY-40,4,68);txt(m+'m',x,GY-52,22,m%100===0?'#e8590c':'#495057');}}
+  g.obs.forEach(o=>emo(o.e,o.x,GY+2,52));emo('🐱',CX,GY+g.y-2,60);
+  bar(g.dist/500,'#f08c00');};
+ g.prog=()=>`🏃 ${Math.floor(g.dist)} / 500 公尺`;return g;},
+
+/* 接金幣 */
+coin(){const BY=570;const g={help:'<b>←</b> <b>→</b> 移動籃子<br><br>60 秒內接到<br><b>30</b> 枚金幣過關'};
+ g.reset=()=>{g.t=0;g.n=0;g.bx=CW/2;g.coins=[];g.sp=0;g.halt=false;};
+ g.update=dt=>{g.t+=dt;if(g.t>=15&&gameTrap(3))return;if(g.t>=35&&gameTrap(4))return;
+  const v=600*dt;if(keys.ArrowLeft||keys.a)g.bx-=v;if(keys.ArrowRight||keys.d)g.bx+=v;g.bx=Math.max(70,Math.min(CW-70,g.bx));
+  g.sp-=dt;if(g.sp<=0){g.coins.push({x:60+Math.random()*(CW-120),y:-30,v:190+Math.random()*110});g.sp=0.75;}
+  g.coins.forEach(c=>c.y+=c.v*dt);
+  g.coins=g.coins.filter(c=>{if(c.y>BY-40&&c.y<BY+10&&Math.abs(c.x-g.bx)<78){g.n++;return false;}return c.y<CH+30;});
+  if(g.n>=30){winGame();return;}if(g.t>=60)failGame('⏰ 時間到！',`接到 ${g.n} 枚，差一點點！`);};
+ g.draw=()=>{sky('#fff3bf','#ffe8cc');g.coins.forEach(c=>emo('🪙',c.x,c.y,44));emo('🧺',g.bx,BY,96);
+  bar(g.n/30,'#fab005');txt('⏱ '+Math.max(0,Math.ceil(60-g.t))+' 秒',CW-30,58,30,'#c92a2a','right');};
+ g.prog=()=>`🪙 ${g.n} / 30 枚`;return g;},
+
+/* 打地鼠 */
+mole(){const H=[];for(let i=0;i<3;i++)for(let j=0;j<3;j++)H.push([240+j*296,200+i*170]);
+ const g={help:'用<b>滑鼠</b>點冒出來的地鼠<br><br>45 秒內打到<br><b>20</b> 隻過關'};
+ g.reset=()=>{g.t=0;g.n=0;g.m=[];g.sp=0.5;g.fx=[];g.halt=false;};
+ g.update=dt=>{g.t+=dt;if(g.t>=10&&gameTrap(5))return;if(g.t>=25&&gameTrap(6))return;
+  g.sp-=dt;if(g.sp<=0&&g.m.length<2){const free=H.map((h,i)=>i).filter(i=>!g.m.some(m=>m.h===i));const h=free[Math.floor(Math.random()*free.length)];g.m.push({h,life:1.4,age:0});g.sp=0.7;}
+  g.m.forEach(m=>m.age+=dt);g.m=g.m.filter(m=>m.age<m.life);g.fx.forEach(f=>f.a+=dt);g.fx=g.fx.filter(f=>f.a<.4);
+  if(g.n>=20){winGame();return;}if(g.t>=45)failGame('⏰ 時間到！',`打到 ${g.n} 隻，再試一次！`);};
+ g.click=(x,y)=>{if(g.halt)return;for(const m of g.m){const [hx,hy]=H[m.h];if(Math.abs(x-hx)<80&&y>hy-110&&y<hy+40){g.n++;g.fx.push({x:hx,y:hy-40,a:0});g.m=g.m.filter(q=>q!==m);return;}}};
+ g.draw=()=>{sky('#d3f9d8','#b2f2bb');H.forEach(([x,y])=>{ctx.fillStyle='#5c3d2e';ctx.beginPath();ctx.ellipse(x,y+10,90,30,0,0,Math.PI*2);ctx.fill();});
+  g.m.forEach(m=>{const [x,y]=H[m.h];const p=Math.min(1,m.age/0.15,(m.life-m.age)/0.15);ctx.save();ctx.beginPath();ctx.rect(x-100,y-140,200,150);ctx.clip();emo('🐹',x,y+40-60*p,80);ctx.restore();ctx.fillStyle='#5c3d2e';ctx.beginPath();ctx.ellipse(x,y+18,90,18,0,0,Math.PI);ctx.fill();});
+  g.fx.forEach(f=>emo('💥',f.x,f.y,70));bar(g.n/20,'#2b8a3e');txt('⏱ '+Math.max(0,Math.ceil(45-g.t))+' 秒',CW-30,58,30,'#c92a2a','right');};
+ g.prog=()=>`🔨 ${g.n} / 20 隻`;return g;},
+
+/* 閃避賽車 */
+race(){const LX=[CW/2-200,CW/2,CW/2+200],CY=CH-100;const g={help:'<b>←</b> <b>→</b> 換車道<br>躲開路障<br><br>有 3 顆愛心<br>撐過 <b>60</b> 秒過關'};
+ g.reset=()=>{g.t=0;g.lane=1;g.x=LX[1];g.obs=[];g.sp=0.6;g.hp=3;g.inv=0;g.off=0;g.halt=false;};
+ g.key=k=>{if(k==='ArrowLeft'||k==='a')g.lane=Math.max(0,g.lane-1);if(k==='ArrowRight'||k==='d')g.lane=Math.min(2,g.lane+1);};
+ g.onResume=()=>{g.obs=g.obs.filter(o=>o.y<CY-260);};
+ g.update=dt=>{g.t+=dt;if(g.t>=15&&gameTrap(7))return;if(g.t>=35&&gameTrap(8))return;
+  const v=320+g.t*2;g.off=(g.off+v*dt)%80;g.x+=(LX[g.lane]-g.x)*Math.min(1,dt*14);g.inv-=dt;
+  g.sp-=dt;if(g.sp<=0){const two=Math.random()<.3;const a=Math.floor(Math.random()*3);const ls=[a];if(two)ls.push((a+1+Math.floor(Math.random()*2))%3);ls.forEach(l=>g.obs.push({l,y:-40,e:['🚧','🪨','🛢️'][Math.floor(Math.random()*3)]}));g.sp=1.05;}
+  g.obs.forEach(o=>o.y+=v*dt);g.obs=g.obs.filter(o=>o.y<CH+50);
+  if(g.inv<=0)for(const o of g.obs){if(Math.abs(LX[o.l]-g.x)<70&&Math.abs(o.y-CY)<62){g.hp--;g.inv=1.5;if(g.hp<=0){failGame('💥 撞壞了！','再試一次，記得早一點換車道！');return;}break;}}
+  if(g.t>=60)winGame();};
+ g.draw=()=>{ctx.fillStyle='#69db7c';ctx.fillRect(0,0,CW,CH);ctx.fillStyle='#495057';ctx.fillRect(CW/2-310,0,620,CH);
+  ctx.fillStyle='#fff';for(const lx of [CW/2-100,CW/2+100])for(let y=-80+g.off;y<CH;y+=80)ctx.fillRect(lx-4,y,8,44);
+  g.obs.forEach(o=>emo(o.e,LX[o.l],o.y,60));
+  if(!(g.inv>0&&Math.floor(g.inv*8)%2)){const x=g.x;ctx.fillStyle='#e03131';ctx.beginPath();ctx.roundRect(x-34,CY-55,68,110,16);ctx.fill();ctx.fillStyle='#a5d8ff';ctx.fillRect(x-24,CY-35,48,24);ctx.fillRect(x-24,CY+18,48,16);ctx.fillStyle='#212529';[[-40,-30],[34,-30],[-40,22],[34,22]].forEach(([a,b])=>ctx.fillRect(x+a,CY+b,6,22));}
+  bar(g.t/60,'#1971c2');txt('❤️'.repeat(Math.max(0,g.hp)),30,58,30,'#c92a2a','left');txt('⏱ '+Math.max(0,Math.ceil(60-g.t))+' 秒',CW-30,58,30,'#c92a2a','right');};
+ g.prog=()=>`⏱ 撐了 ${Math.floor(g.t)} / 60 秒`;return g;}
+};
+cv.addEventListener('mousedown',e=>{if(!G||trapOpen||G.halt||!G.click)return;const b=cv.getBoundingClientRect();G.click((e.clientX-b.left)*CW/b.width,(e.clientY-b.top)*CH/b.height);});
+
+/* ===== 鍵盤 ===== */
+const GAMEKEYS=[' ','Enter','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'];
+addEventListener('keydown',e=>{
+  if(curScreen==='teacher'){if(e.key==='ArrowRight'||e.key==='ArrowDown'){tv.i=Math.min(9,tv.i+1);renderTeacher();e.preventDefault();}if(e.key==='ArrowLeft'||e.key==='ArrowUp'){tv.i=Math.max(1,tv.i-1);renderTeacher();e.preventDefault();}if(e.key==='1'||e.key==='2'){tv.r=+e.key;renderTeacher();}return;}
+  if(curScreen==='tpw')return;
+  if(trapOpen){if(GAMEKEYS.includes(e.key))e.preventDefault();return;}
+  if(curScreen!=='game'||!G)return;
+  if(GAMEKEYS.includes(e.key))e.preventDefault();
+  if($('#gmsg').classList.contains('on')){if((e.key===' '||e.key==='Enter')&&G.msgFn&&!e.repeat)G.msgFn();return;}
+  keys[e.key]=true;if(G.key&&!e.repeat)G.key(e.key);});
+addEventListener('keyup',e=>{keys[e.key]=false;});
+addEventListener('blur',()=>{for(const k in keys)keys[k]=false;});
+
+/* ===== 報告 ===== */
+function renderReport(){const r=R(),c=counts(r),[te,tn]=titleOf(c.spot);const r1=S.cur===2?S.r[1]:null;const c1=r1?counts(r1):null;
+  const lab=k=>k?`<span class="rs-${k}">${RES_LABEL[k]}</span>`:'<span class="rs-none">— 沒遇到</span>';
+  let cmp='';if(c1){cmp=`<div class="cmp">第一堂識破 <b>${c1.spot}</b> 個 → 第二堂 <b>${c.spot}</b> 個${c.spot>c1.spot?'<br><span class="up">🎉 你進步了！</span>':''}</div>`;}
+  const rows=[1,2,3,4,5,6,7,8].map(n=>{const t=T[S.cur][n];return `<tr><td>${n}</td><td class="nm">${CAT[t.cat]} ${t.name}</td><td class="rs">${lab(r.res[n])}</td>${r1?`<td class="rs">${lab(r1.res[n])}</td>`:''}<td>${t.say}</td></tr>`;}).join('');
+  $('#rp').innerHTML=`<div class="rhead"><h2>📜 ${r.emo} ${r.fish} 的揭秘報告（第${S.cur===1?'一':'二'}堂）</h2><button class="bigbtn blue" id="rpBack" style="font-size:24px;padding:8px 24px">🏠 回大廳</button></div>
+  <div class="stats"><div class="sb">🔍 識破<b class="rs-spot">${c.spot}</b></div><div class="sb">🚪 安全離開<b class="rs-safe">${c.safe}</b></div><div class="sb">🐟 中招<b class="rs-caught">${c.caught}</b></div><div class="sb">💰 零用錢${r.money>0?`<b class="mny">你守住了 ${r.money} 元</b>`:'<b class="mny zero">零用錢被釣光了！</b>'}</div></div>
+  <div class="ttl"><span class="te">${te}</span>你的稱號：${tn}${cmp}</div>
+  <table><tr><th>#</th><th>陷阱的名字</th><th>你的結果</th>${r1?'<th>第一堂</th>':''}<th>這招在做什麼</th></tr>${rows}</table>
+  <div class="rfoot"><span style="font-size:18px;color:#666">很多大人也會被騙喔！記住這些招數，下次就不會上當。</span></div>`;
+  $('#rpBack').onclick=toLobby;show('report');}
+
+/* ===== 老師揭秘模式 ===== */
+const tv={r:1,i:1};
+function renderTeacher(){document.querySelectorAll('.ttab').forEach(b=>b.classList.toggle('on',+b.dataset.r===tv.r));
+  const list=[1,2,3,4,5,6,7,8].map(n=>{const t=T[tv.r][n];return `<div class="tli ${tv.i===n?'on':''}" data-i="${n}">${n}. ${CAT[t.cat]} ${t.name.replace(/（.*）/,'')}</div>`;}).join('')+`<div class="tli ${tv.i===9?'on':''}" data-i="9">⭐ 五招總整理</div>`;
+  $('#tlist').innerHTML=list;document.querySelectorAll('.tli').forEach(e=>e.onclick=()=>{tv.i=+e.dataset.i;renderTeacher();});
+  const M=$('#tmain');
+  if(tv.i===9){M.innerHTML=`<div class="tsum"><h2>⭐ 五招總整理：騙子的五個字</h2>${FIVE.map(f=>`<div class="m"><span class="k">${f[0]}</span><span class="d">${f[1]}</span><span class="a">→ ${f[2]}</span></div>`).join('')}</div>`;return;}
+  const t=T[tv.r][tv.i],g=GAMES.find(g=>g.traps.includes(tv.i));
+  M.innerHTML=`<div class="tpv"><div class="pv" id="pv">${t.html({fish:'小丑魚偵探',emo:'🐠'})}</div></div><div class="ttext"><div class="tc2">${g.icon} ${g.name}・${CAT[t.cat]} ${t.cat}</div><div class="tn">${t.name}</div><div class="say">${t.say}</div><div class="q">💬 想一想：${t.q}</div><div class="nav">紅圈＝可疑的地方　｜　${tv.i} / 8</div></div>`;
+  requestAnimationFrame(()=>{const pv=$('#pv');if(!pv)return;const box=pv.parentElement;const s=Math.min(1,(box.clientWidth-20)/pv.offsetWidth,(box.clientHeight-30)/pv.offsetHeight);pv.style.transform=`scale(${s})`;
+    const h=pv.querySelector('[data-hot]');if(!h)return;const pr=pv.getBoundingClientRect(),hr=h.getBoundingClientRect(),k=pr.width/pv.offsetWidth;
+    const ring=document.createElement('div');ring.className='redring';const pad=14;ring.style.left=((hr.left-pr.left)/k-pad)+'px';ring.style.top=((hr.top-pr.top)/k-pad)+'px';ring.style.width=(hr.width/k+pad*2)+'px';ring.style.height=(hr.height/k+pad*2)+'px';pv.appendChild(ring);});}
+function openTeacher(){show('teacher');renderTeacher();}
+
+/* ===== 綁定 ===== */
+$('#r1btn').onclick=()=>pickRound(1);$('#r2btn').onclick=()=>pickRound(2);
+$('#enterLobby').onclick=toLobby;$('#backStart').onclick=renderStart;$('#toLobby').onclick=toLobby;
+$('#reportBtn').onclick=renderReport;
+$('#restartBtn').onclick=()=>confirmBox('要清除<b>這台電腦</b>的遊戲紀錄嗎？<br><span style="font-size:22px;color:#666">（給下一班的同學用，清除後不能復原）</span>',()=>{try{localStorage.removeItem(KEY);}catch(e){}S=blank();renderStart();toast('紀錄已清除');});
+document.querySelectorAll('.ttab').forEach(b=>b.onclick=()=>{tv.r=+b.dataset.r;tv.i=1;renderTeacher();});
+const tryPw=()=>{if($('#tpw').value==='naes5922023'){$('#tpw').value='';openTeacher();}else $('#terr').textContent='密碼不對喔';};
+$('#tpwBtn').onclick=tryPw;$('#tpw').addEventListener('keydown',e=>{if(e.key==='Enter')tryPw();});
+
+/* ===== 自我測試（網址加 ?selftest=1） ===== */
+function runSelfTest(){const out=[];let ok=true;const chk=(c,m)=>{out.push((c?'OK   ':'FAIL ')+m);if(!c)ok=false;};
+  const box=document.createElement('div');document.body.appendChild(box);
+  for(const rd of [1,2])for(let n=1;n<=8;n++){const t=T[rd][n];box.innerHTML=t.html({fish:'測試偵探',emo:'🐟'});
+    chk(box.querySelectorAll('[data-hot]').length===1,`R${rd}-T${n} 剛好一個可疑點`);
+    chk(!!box.querySelector('[data-act=safe]'),`R${rd}-T${n} 有安全離開的方法`);
+    chk(!!box.querySelector('[data-act=caught],[data-act=pay]'),`R${rd}-T${n} 有中招按鈕`);
+    chk(t.name&&t.say&&t.q&&CAT[t.cat],`R${rd}-T${n} 揭秘文字齊全`);
+    chk(!box.querySelector('input,textarea,[contenteditable]'),`R${rd}-T${n} 沒有可自由打字的框`);
+    if(t.setup){const c=t.setup(box);chk(typeof c==='function',`R${rd}-T${n} 動態效果可清除`);c();}}
+  box.remove();
+  const r=newRound();chk(r.money===1000&&/偵探$/.test(r.fish),'新偵探證 1000 元、魚類名字');
+  chk(record(r,1,'caught')===397&&r.money===603,'陷阱1 中招扣 397');
+  chk(record(r,1,'caught')===0&&r.money===603,'同一陷阱只記第一次');
+  record(r,2,'spot');chk(r.money===603&&r.res[2]==='spot','識破不扣錢');
+  record(r,3,'safe');chk(r.money===603,'安全離開不扣錢');
+  record(r,4,'caught');chk(r.money===303,'陷阱4 扣 300');
+  record(r,5,'caught');record(r,6,'caught');chk(r.money===3,'陷阱5、6 各扣 150');
+  record(r,7,'caught');chk(r.money===0,'扣到 0 停在 0');record(r,8,'caught');chk(r.money===0,'不會變負數');
+  const c=counts(r);chk(c.spot===1&&c.safe===1&&c.caught===6,'結果統計正確');
+  chk(titleOf(8)[1]==='鯊魚級偵探'&&titleOf(7)[1]==='鯊魚級偵探'&&titleOf(6)[1]==='海豚級偵探'&&titleOf(4)[1]==='海豚級偵探'&&titleOf(3)[1]==='小心別當大魚！'&&titleOf(0)[1]==='小心別當大魚！','稱號分級');
+  const keep=S;S={v:1,cur:2,r:{1:r,2:newRound()}};save();const L=load();chk(L&&L.r[1].res[1]==='caught'&&L.cur===2,'存檔讀回');
+  try{localStorage.removeItem(KEY);}catch(e){}chk(load()===null,'重新開始能清除');S=keep;save();
+  chk(getComputedStyle($('#safeTag')).position==='fixed'&&$('#safeTag').textContent.includes('不會真的扣錢'),'角落標示存在');
+  document.body.appendChild(Object.assign(document.createElement('pre'),{className:'selftest',textContent:(ok?'ALL PASS\n\n':'有失敗項目\n\n')+out.join('\n')}));
+  window.SELFTEST_OK=ok;}
+
+window.BF={get S(){return S;},T,record,openTrap,finishTrap,get G(){return G;},get trapOpen(){return trapOpen;},startGame,toLobby,pickRound,renderReport};
+if(Q.has('selftest'))runSelfTest();
+else if(Q.has('teacher'))show('tpw');
+else renderStart();
+</script>
+</body>
+</html>
