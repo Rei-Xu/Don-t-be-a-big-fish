@@ -710,13 +710,17 @@ function openTrap(n,cb){
 function setMag(on){if(!trapOpen)return;if(on!==trapOpen.mag)sfx('mag',.4);trapOpen.mag=on;$('#trapLayer').classList.toggle('mag',on);const b=$('#magBtn');if(b){b.classList.toggle('active',on);b.textContent=on?'🔍 取消放大鏡':'🔍 放大鏡';}}
 function onTrapClick(e){
   if(!trapOpen||trapOpen.done)return;e.preventDefault();e.stopPropagation();const t=trapOpen.t;
-  if(trapOpen.mag){if(e.target.closest('[data-hot]'))finishTrap('spot');else again(e);return;}
+  if(trapOpen.mag){if(e.target.closest('[data-hot]')||nearHot(e))finishTrap('spot');else again(e);return;}
   const f=e.target.closest('[data-fill]');if(f){f.textContent=f.dataset.fill;f.classList.add('filled');return;}
   const a=e.target.closest('[data-act]');if(!a)return;const act=a.dataset.act;if((act==='caught'||act==='pay')&&a.hasAttribute('data-buy'))trapOpen.bought=true;
   if(act==='toggle'){a.querySelector('.chk').classList.toggle('on');if(t.onToggle)t.onToggle($('#tc'));return;}
   if(act==='pay'){const c=$('#tc [data-act=toggle] .chk');if(c&&!c.classList.contains('on'))finishTrap('safe',t.subMsg);else finishTrap('caught');return;}
   if(act==='caught')finishTrap('caught',a.dataset.msg||'');else if(act==='safe')finishTrap('safe');
 }
+/* 放大鏡寬容範圍：點在可疑點外圍 HOT_PAD（舞台座標 px）內也算識破 */
+const HOT_PAD=30;
+function nearHot(e){const h=$('#tc [data-hot]');if(!h)return false;const b=h.getBoundingClientRect(),p=HOT_PAD*K;
+  const dx=Math.max(b.left-e.clientX,0,e.clientX-b.right),dy=Math.max(b.top-e.clientY,0,e.clientY-b.bottom);return Math.hypot(dx,dy)<=p;}
 function again(e){const [x,y]=toStage(e.clientX,e.clientY);const d=document.createElement('div');d.className='again';d.textContent='再看看？🤔';d.style.left=(x-50)+'px';d.style.top=(y-50)+'px';stage.appendChild(d);setTimeout(()=>d.remove(),1300);}
 function finishTrap(kind,extra){
   const o=trapOpen;if(!o||o.done)return;o.done=true;if(o.cleanup)o.cleanup();setMag(false);
